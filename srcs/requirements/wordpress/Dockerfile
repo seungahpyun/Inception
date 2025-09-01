@@ -12,11 +12,13 @@ RUN apt-get update && apt-get install -y \
     php8.2-xmlrpc \
     php8.2-zip \
     curl \
+    wget \
     && rm -rf /var/lib/apt/lists/*
 
-RUN curl -O https://raw.githubusercontent.com/wp-cli/wp-cli/v2.8.1/wp-cli.phar \
-    && chmod +x wp-cli.phar \
-    && mv wp-cli.phar /usr/local/bin/wp
+RUN curl -o /tmp/wp-cli.phar https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar \
+    && chmod +x /tmp/wp-cli.phar \
+    && mv /tmp/wp-cli.phar /usr/local/bin/wp
+
 
 COPY conf/www.conf /etc/php/8.2/fpm/pool.d/www.conf
 
