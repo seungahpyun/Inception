@@ -1,12 +1,30 @@
 services:
   nginx:
-    build: 
+    build:
       context: ./requirements/nginx
       dockerfile: Dockerfile
     container_name: nginx
     ports:
+      - "80:80"
       - "443:443"
     restart: unless-stopped
+    networks:
+      - inception
+
+  mariadb:
+    build:
+      context: ./requirements/mariadb
+      dockerfile: Dockerfile
+    container_name: mariadb
+    restart: unless-stopped
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - inception
+
+volumes:
+  db_data:
+    driver: local
 
 networks:
   inception:
