@@ -1,6 +1,16 @@
 #!/bin/bash
 
-mysql_install_db --user=mysql --datadir=/var/lib/mysql
+DB_ROOT_PASS=$(cat /run/secrets/db_root_password | tr -d '\n\r')
+DB_PASS=$(cat /run/secrets/db_password | tr -d '\n\r')
+
+if [ ! -d "/var/lib/mysql/mysql" ]; then
+	echo "Initializing MariaDB database..."
+	mysql_install_db --user=mysql --datadir=/var/lib/mysql
+	FIRST_RUN=true
+else
+	echo "MariaDB database already exists, skipping initialization..."
+	FIRST_RUN=false
+fi
 
 mysqld_safe --user=mysql --datadir=/var/lib/mysql &
 
@@ -9,12 +19,19 @@ while ! mysqladmin ping -hlocalhost --silent; do
 	sleep 2
 done
 
-
-mysql -e "CREATE DATABASE IF NOT EXISTS wordpress;"
-mysql -e "CREATE USER IF NOT EXISTS 'wpuser'@'%' IDENTIFIED BY 'wppassword';"
-mysql -e "GRANT ALL PRIVILEGES ON wordpress.* TO 'wpuser'@'%';"
-mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED BY 'rootpassword';"
-mysql -e "FLUSH PRIVILEGES;"
+if [ "$FIRST_RUN" = true ]; then
+	echo "Setting up database and users..."
+	mysql -u root << EOF
+CREATE DATABASE IF NOT EXISTS ${MYSQL_DATABASE};
+CREATE USER IF NOT EXISTS '${MYSQL_USER}'@'%' IDENTIFIED BY '${DB_PASS}';
+GRANT ALL PRIVILEGES ON ${MYSQL_DATABASE}.* TO '${MYSQL_USER}'@'%';
+ALTER USER 'root'@'localhost' IDENTIFIED BY '${DB_ROOT_PASS}';
+FLUSH PRIVILEGES;
+EOF
+	echo "Database setup completed!"
+else
+	echo "Database already configured, starting MariaDB..."
+fi
 
 echo "Database initialized successfully!"
 
