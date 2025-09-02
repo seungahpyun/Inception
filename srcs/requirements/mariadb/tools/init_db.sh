@@ -30,7 +30,13 @@ FLUSH PRIVILEGES;
 EOF
 	echo "Database setup completed!"
 else
-	echo "Database already configured, starting MariaDB..."
+	echo "Database already configured, ensuring user permissions..."
+	mysql -u root -p${DB_ROOT_PASS} << EOF
+CREATE DATABASE IF NOT EXISTS ${MYSQL_DATABASE};
+CREATE USER IF NOT EXISTS '${MYSQL_USER}'@'%' IDENTIFIED BY '${DB_PASS}';
+GRANT ALL PRIVILEGES ON ${MYSQL_DATABASE}.* TO '${MYSQL_USER}'@'%';
+FLUSH PRIVILEGES;
+EOF
 fi
 
 echo "Database initialized successfully!"
