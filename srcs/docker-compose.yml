@@ -61,8 +61,16 @@ services:
 volumes:
   db_data:
     driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/spyun/data/mysql
   wordpress_data:
     driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/spyun/data/wordpress
 
 networks:
   inception:
