@@ -12,7 +12,6 @@ else
 	FIRST_RUN=false
 fi
 
-# 백그라운드로 시작
 mysqld_safe --user=mysql --datadir=/var/lib/mysql &
 MYSQL_PID=$!
 
