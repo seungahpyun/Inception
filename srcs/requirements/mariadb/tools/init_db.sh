@@ -12,7 +12,9 @@ else
 	FIRST_RUN=false
 fi
 
+# 백그라운드로 시작
 mysqld_safe --user=mysql --datadir=/var/lib/mysql &
+MYSQL_PID=$!
 
 while ! mysqladmin ping -hlocalhost --silent; do
 	echo "Waiting for MariaDB to start..."
@@ -41,4 +43,4 @@ fi
 
 echo "Database initialized successfully!"
 
-wait
+wait $MYSQL_PID
