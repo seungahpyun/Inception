@@ -12,7 +12,6 @@ env:
 secrets:
 	@if [ ! -d "secrets" ]; then \
 		mkdir -p secrets; \
-		echo "Creating secrets..."; \
 		openssl rand -base64 16 | tr -d '\n' > secrets/db_root_password.txt; \
 		openssl rand -base64 16 | tr -d '\n' > secrets/db_password.txt; \
 		openssl rand -base64 16 | tr -d '\n' > secrets/wp_admin_password.txt; \
@@ -28,8 +27,8 @@ setup:
 	@mkdir -p /home/$(USER)/data/mysql
 	@echo "Data directories created successfully!"
 
-all: secrets setup
-	cd srcs && docker compose up --build
+all: env secrets setup
+	cd srcs && HOME=/home/$(USER) docker compose up --build
 
 down:
 	cd srcs && docker compose down
@@ -43,4 +42,4 @@ fclean: down
 
 re: fclean all
 
-.PHONY: all down setup secrets clean fclean re
+.PHONY: all down setup secrets env clean fclean re
