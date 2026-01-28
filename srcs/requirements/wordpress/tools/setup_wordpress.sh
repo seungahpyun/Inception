@@ -26,7 +26,7 @@ if [ ! -f wp-config.php ]; then
 
 	wp user create ${WP_USER} ${WP_USER_EMAIL} \
 		--user_pass=${WP_USER_PASS} \
-		--role=editor \
+		--role=author \
 		--allow-root
 fi
 

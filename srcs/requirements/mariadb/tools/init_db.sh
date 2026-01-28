@@ -8,7 +8,7 @@ if [ ! -d "/var/lib/mysql/mysql" ]; then
 	mysql_install_db --user=mysql --datadir=/var/lib/mysql
 	FIRST_RUN=true
 else
-	echo "MariaDB database already exists, skipping initialization..."
+	echo "MariaDB database already exists"
 	FIRST_RUN=false
 fi
 
@@ -20,26 +20,47 @@ while ! mysqladmin ping -hlocalhost --silent; do
 	sleep 2
 done
 
+echo "MariaDB is ready!"
+
 if [ "$FIRST_RUN" = true ]; then
-	echo "Setting up database and users..."
+	echo "First run - Setting up database..."
 	mysql -u root << EOF
 CREATE DATABASE IF NOT EXISTS ${MYSQL_DATABASE};
-CREATE USER IF NOT EXISTS '${MYSQL_USER}'@'%' IDENTIFIED BY '${DB_PASS}';
+CREATE USER '${MYSQL_USER}'@'%' IDENTIFIED BY '${DB_PASS}';
 GRANT ALL PRIVILEGES ON ${MYSQL_DATABASE}.* TO '${MYSQL_USER}'@'%';
 ALTER USER 'root'@'localhost' IDENTIFIED BY '${DB_ROOT_PASS}';
 FLUSH PRIVILEGES;
 EOF
 	echo "Database setup completed!"
 else
-	echo "Database already configured, ensuring user permissions..."
-	mysql -u root -p${DB_ROOT_PASS} << EOF
+	echo "Existing database - Recreating user..."
+	if mysql -u root -e "SELECT 1" 2>/dev/null; then
+		mysql -u root << EOF
 CREATE DATABASE IF NOT EXISTS ${MYSQL_DATABASE};
-CREATE USER IF NOT EXISTS '${MYSQL_USER}'@'%' IDENTIFIED BY '${DB_PASS}';
+DROP USER IF EXISTS '${MYSQL_USER}'@'%';
+CREATE USER '${MYSQL_USER}'@'%' IDENTIFIED BY '${DB_PASS}';
+GRANT ALL PRIVILEGES ON ${MYSQL_DATABASE}.* TO '${MYSQL_USER}'@'%';
+ALTER USER 'root'@'localhost' IDENTIFIED BY '${DB_ROOT_PASS}';
+FLUSH PRIVILEGES;
+EOF
+	else
+		mysql -u root -p${DB_ROOT_PASS} << EOF
+CREATE DATABASE IF NOT EXISTS ${MYSQL_DATABASE};
+DROP USER IF EXISTS '${MYSQL_USER}'@'%';
+CREATE USER '${MYSQL_USER}'@'%' IDENTIFIED BY '${DB_PASS}';
 GRANT ALL PRIVILEGES ON ${MYSQL_DATABASE}.* TO '${MYSQL_USER}'@'%';
 FLUSH PRIVILEGES;
 EOF
+	fi
+	echo "User and database recreated!"
 fi
 
-echo "Database initialized successfully!"
+echo "Testing connection..."
+if mysql -u ${MYSQL_USER} -p${DB_PASS} ${MYSQL_DATABASE} -e "SELECT 1;" > /dev/null 2>&1; then
+	echo "✅ Connection test successful!"
+else
+	echo "❌ Connection test failed!"
+	mysql -u root -p${DB_ROOT_PASS} -e "SHOW DATABASES; SELECT User, Host FROM mysql.user WHERE User='${MYSQL_USER}';"
+fi
 
 wait $MYSQL_PID
