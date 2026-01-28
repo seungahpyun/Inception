@@ -6,7 +6,13 @@ DB_PASS=$(cat /run/secrets/db_password | tr -d '\n\r')
 WP_ADMIN_PASS=$(cat /run/secrets/wp_admin_password | tr -d '\n\r')
 WP_USER_PASS=$(cat /run/secrets/wp_user_password | tr -d '\n\r')
 
+
+while ! mariadb-admin ping -h "mariadb" --silent; do
+    sleep 1
+done
+
 if [ ! -f wp-config.php ]; then
+	echo "Setting up WordPress..."
 	wp core download --allow-root
 
 	wp config create \
@@ -31,6 +37,7 @@ if [ ! -f wp-config.php ]; then
 
 	chown -R www-data:www-data /var/www/html
 	chmod -R 755 /var/www/html
+	echo "WordPress setup completed!"
 fi
 
 exec php-fpm8.2 -F
