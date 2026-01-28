@@ -31,6 +31,9 @@ clean: down
 fclean: down
 	@cd srcs && docker compose down -v
 	@docker system prune -af --volumes
+	@sudo rm -rf /home/$(USER)/data
+	@rm -rf srcs/.env
+	@rm -rf secrets
 
 re: fclean all
 
