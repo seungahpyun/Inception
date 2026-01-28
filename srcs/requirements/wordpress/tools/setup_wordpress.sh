@@ -28,9 +28,9 @@ if [ ! -f wp-config.php ]; then
 		--user_pass=${WP_USER_PASS} \
 		--role=author \
 		--allow-root
+
+	chown -R www-data:www-data /var/www/html
+	chmod -R 755 /var/www/html
 fi
 
-chown -R www-data:www-data /var/www/html
-chmod -R 755 /var/www/html
-
-php-fpm8.2 -F
+exec php-fpm8.2 -F
